@@ -1,0 +1,1039 @@
+===========================================================
+<<< MCCE Multi-Conformation Continuum Electrostatics >>>   
+ Marilyn Gunner's Lab at City College of New York, 2005    
+-----------------------------------------------------------
+Version:        2.5.1                                      
+MCCE Home Page: http://www.sci.ccny.cuny.edu/~gunner/mcce  
+Support:        gunner@sci.ccny.cuny.edu                   
+Developed by:   Junjun Mao, Yifan Song, Marilyn Gunner     
+Reference MCCE: If you publish data calculated with MCCE,  
+                you need to cite papers suggested in MCCE  
+                Home Page.                                 
+===========================================================
+
+Last Updates:                                              
+   04/10, Added Pascal Comte's GA/SA algorithm for sidechain
+          packing and sampling.     			      
+   04/10, Added APBS electrostatic calculation option      
+   08/08, Total pairwise is set to be 999.0 if vdw is 999.0
+   08/02, step 3, zero interaction bug fixed               
+   07/23, step 1 changes the policy on AltLoc backbone atoms
+          now it is warning instead of fatal error.        
+   06/22, step 1 recognizes FME and ACE as NTR caps        
+   05/27, step 2 reduces rotation steps for surface residues
+          The run.prm.default uses 0.25 SAS to decide suface
+          residues.                                        
+   05/04, Program doesn't stop at duplicate parameters,    
+          it issues a warning message. This fixes the deadlock
+          caused by multiple new cofactors                 
+   04/24, Energy lookup table compressed, size is reduced  
+          to about 1/12                                    
+   04/24, Opp files are compressed. Temporary files are    
+          stored under local directory.                    
+   04/14, Step 2 rotamer pruning by pairwise corrected.    
+   04/08, Step 2 repacking now ses better H bnd correction.
+   01/26, Step 3 fixed incorrect errno message.            
+   01/14, Step 3 dielectric boundary condition improved.   
+   12/07, Step 3 dielectric boundary condition is corrected.
+   11/17, pKa fitting writes "pKa titration curve too sharp"
+          when occ jumps from 0.015 to 0.985.              
+   11/17, Exposed conformer is marked as E in history.     
+   11/02, Optional quick step 3 included.                  
+   11/02, Pruning fuction is added at the end of step 2.   
+          Parameter lines were added to run.prm.           
+   10/29, Temporary gdbm files have file names.            
+   10/11, Use biggest rxn energy from the last 3 delphi    
+          focusing runs.                                   
+===========================================================
+
+Step 0. Initialize enviroment
+   Load run control file "run.prm"...
+   Done
+
+   Tentatively load local param file "new.tpl"...   No such file, ignore.
+   Done
+
+   Load parameters from directory "/home/mcce/mcce2.5.1/param04" ... 
+
+   In file /home/mcce/mcce2.5.1/param04/hec.tpl, parameter "CONNECT  HMC01  CAB sp2       0     C3B 0     CBB LIG   SG" is already loaded somewhere else.
+   Try delete this entry and run MCCE again
+   Done
+
+   Load linear free energy correction parameters from "/home/mcce/mcce2.5.1/extra.tpl".../home/mcce/mcce2.5.1/extra.tpl
+   File loaded.
+   Done
+
+Step 0 Done.
+
+Step 1. Test and format structral file
+   Read pdb file "prot.pdb"...
+   Done
+
+   Read name rule file "/home/mcce/mcce2.5.1/name.txt"...
+   Done
+
+   Rename residue and atom names...
+   Renaming "CA    CA A 502" to "CA   _CA A 502"
+   Done
+
+   Identify NTR and CTR...
+      Labeling "LYS A   6" as NTR
+      Labeling "SER A 141" as CTR
+   Done
+
+   Label backbone, sidechain and altLoc conformers...
+   Error! premcce_confname(): Can't get conformer list of this residue DMS
+   Creating temporary parameter file for unrecognized residue...
+   Trying labeling again...
+   Error! premcce_confname(): Can't get conformer list of this residue THP
+   Creating temporary parameter file for unrecognized residue...
+
+   In file new.tpl, parameter "CONFLIST DMS        DMSBK" is already loaded somewhere else.
+   Try delete this entry and run MCCE again
+   Trying labeling again...
+   Error! premcce_confname(): Can't get conformer list of this residue GOL
+   Creating temporary parameter file for unrecognized residue...
+
+   In file new.tpl, parameter "CONFLIST DMS        DMSBK" is already loaded somewhere else.
+   Try delete this entry and run MCCE again
+   Trying labeling again...
+   Done
+
+   Load pdb lines into data structure...
+   Done
+
+   Strip free cofactors with SAS >   5%...
+   Warning! assign_vdw_param(): missing parameter(s), default value is used and saved in debug.log.
+        0 free cofactors were stripped off in this round
+   Total deleted cofactors = 0.
+   Done
+
+   Check missing heavy atoms and complete altLoc conformers...
+   Missing heavy atom  N   of conf LYSBK in "LYS A   6".
+   Missing heavy atom  CA  of conf LYSBK in "LYS A   6".
+   Missing heavy atom  C   of conf SERBK in "SER A 141".
+   Missing heavy atom  O   of conf SERBK in "SER A 141".
+   Missing heavy atom  OXT of conf CTR01 in "CTR A 141".
+   Missing heavy atoms detected.
+   Ignore warning messages if they are in the terminal residues
+   Done
+
+   Find distance clash (<2.000)...
+   d= 1.53: " CA  NTR A   6" to " CB  LYS A   6"
+   Done
+
+   Make connectivity network ...
+   Done.
+
+   Total time for step1 (premcce) is 0 seconds.
+
+   Output files:
+      step1_out.pdb         will be the input of step 2.
+      head1.lst             rotamer making control file for step 2
+      acc.atm               atom solvent accessible surface
+      acc.res               residue solvent accessible surface
+      head1.lst             rotamer making instruction, used in step2
+
+Step 1 Done.
+
+Step 2. Make multi side chain conformers
+   Load step 1 output file step1_out.pdb...
+   Done
+
+   Rotamer statistics is dynamically updated in file "rot_stat"
+
+   Remove redundant heavy atom conformers in step1_out.pdb
+   0 conformers were deleted.
+   Done
+
+
+   Relax crystal water..
+   Done
+
+   Prepare for rotamer making ...
+   Deleting H atoms...1096 H atoms were deleted.
+   Assigning radii.
+   Warning! assign_rad():      missing parameter(s), default value is used and saved in debug.log.
+   Estimating Solvent Accessible Surface (SAS).
+   Done.
+
+   Swap atoms...
+   Done
+
+
+   Extra rotamers...
+   Done
+
+
+   Delete duplicate conformers ... 0 conformers deleted.
+   Done. Time spent = 0
+
+   Prune rotamers by self VDW potential...
+   Creating connectivity table...
+   Computing self VDW potential. It may take a while...
+   Warning! assign_crg():      missing parameter(s), default value is used and saved in debug.log.
+   Pruning rotamers...0 rotamers deleted.
+   Done. Time spent = 1
+
+
+   Tuning exposed rotamers...
+   Done. Time spent = 0
+
+
+   Repack side chains 5000 times, remove inaccessible conformers...
+   Computing pairwise LJ potential. This may take a while.
+      Estimated time on AMD 1.6GHz is 0 seconds.
+      Actual time is 1
+   Repacking in progress, see progress.log for details...
+   Done. Time spent = 1
+
+
+   Skip writing heavy atome rotamer pdb file hvrot.pdb
+   Randomly prune conformers...
+   Done
+
+   Making ionization conformers...
+   Done
+
+
+   Add H atoms...
+   Warning! assign_crg():      missing parameter(s), default value is used and saved in debug.log.
+   Done
+
+       10 conformers deleted in this cycle at    2.000    2.000    2.000
+
+   NOT optimizing hydroxyl and water.
+
+   Sorting conformers...
+   Done
+
+   Skip writing full rotamer file step2_out.full.
+   Delete duplicate conformers ...
+      4 conformers deleted in this cycle at    2.000    2.000    2.000
+   Done. Time spent = 2
+
+
+   Write output...
+   Done
+
+   Total time for step2 (rotamer making) is 6 seconds.
+
+   Output files:
+      step2_out.pdb   : mcce pdb file, the input of step 3
+      head2.lst       : conformer summary
+      step2_out.full  : rotamers without pairwise pruning.
+      hvrot.pdb       : heavy atom rotamers, can be used recursively by step 2
+
+Step 2 Done.
+
+Step 3. Compute energy lookup table
+   Load step 2 output file step2_out.pdb...
+   Done
+
+   Reporting non integer conformer charge ...
+   Passed, no non-integer charges
+   Done
+
+   Creating connectivity table...
+   Done
+
+   Preparing PBE runs at epsilon 4.00 ...
+      3 focusing runs required for this protein.
+   Done
+
+Running delphi surface calculations ...
+
+   Computing pairwise from conformer 1 to 283 of 283 total conformers
+      see progress.log for progress...
+Large vdw btw " N   NTR A0006A001" and " O   LYS A0006A000":    0.658, dist=  2.7873
+Large vdw btw " N   NTR A0006A002" and " O   LYS A0006A000":    0.658, dist=  2.7873
+Large vdw btw " CG  LYS A0006A001" and " C   LYS A0006A000":    0.548, dist=  2.9692
+Large vdw btw " CG  LYS A0006A002" and " C   LYS A0006A000":    0.548, dist=  2.9692
+Large vdw btw "1HB  LEU A0007A001" and " C   LEU A0007A000":    0.562, dist=  2.4776
+Large vdw btw "2HB  LEU A0007A001" and " N   LEU A0007A000":    0.523, dist=  2.4840
+Large vdw btw " CD1 LEU A0007A001" and " CA  LEU A0007A000":    0.550, dist=  2.9897
+Large vdw btw " CG  LYS A0009A001" and " N   LYS A0009A000":    0.505, dist=  2.9746
+Large vdw btw " CG  LYS A0009A002" and " N   LYS A0009A000":    0.505, dist=  2.9746
+Large vdw btw " CG  GLU A0010A001" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CG  GLU A0010A002" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CG  GLU A0010A003" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CG  GLU A0010A004" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CG  GLU A0010A005" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CD  PRO A0011A001" and " CA  GLU A0010A000":    0.606, dist=  2.9725
+Large vdw btw " OG1 THR A0013A001" and " N   THR A0013A000":    0.829, dist=  2.7992
+Large vdw btw " OG1 THR A0013A002" and " N   THR A0013A000":    0.829, dist=  2.7992
+Large vdw btw " CG  LEU A0014A001" and " C   LEU A0014A000":    0.528, dist=  2.9758
+Large vdw btw " CG2 ILE A0015A001" and " CD1 ILE A0015A001":    0.537, dist=  2.9939
+Large vdw btw " CD1 ILE A0015A001" and " CG2 ILE A0015A001":    0.537, dist=  2.9939
+Large vdw btw " CG2 ILE A0015A001" and " C   ILE A0015A000":    0.797, dist=  2.9014
+Large vdw btw " CG  LYS A0016A001" and " C   LYS A0016A000":    0.533, dist=  2.9741
+Large vdw btw " CG  LYS A0016A002" and " C   LYS A0016A000":    0.533, dist=  2.9741
+Large vdw btw " CG1 ILE A0018A001" and " N   ILE A0018A000":    0.612, dist=  2.9429
+Large vdw btw " CG2 ILE A0018A001" and " C   ILE A0018A000":    0.738, dist=  2.9155
+Large vdw btw " OD2 ASP A0019A001" and " CA  ASP A0019A000":    0.608, dist=  2.8324
+Large vdw btw " CB  ASP A0019A001" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " OD2 ASP A0019A002" and " CA  ASP A0019A000":    0.608, dist=  2.8324
+Large vdw btw " CB  ASP A0019A002" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " OD2 ASP A0019A003" and " CA  ASP A0019A000":    0.814, dist=  2.8324
+Large vdw btw " CB  ASP A0019A003" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " OD2 ASP A0019A004" and " CA  ASP A0019A000":    0.814, dist=  2.8324
+Large vdw btw " CB  ASP A0019A004" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " OD2 ASP A0019A005" and " CA  ASP A0019A000":    0.608, dist=  2.8324
+Large vdw btw " CB  ASP A0019A005" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " CG  ASP A0021A001" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A001" and " CA  ASP A0021A000":    0.683, dist=  2.8140
+Large vdw btw " CG  ASP A0021A002" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A002" and " CA  ASP A0021A000":    0.683, dist=  2.8140
+Large vdw btw " CG  ASP A0021A003" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A003" and " CA  ASP A0021A000":    0.908, dist=  2.8140
+Large vdw btw " CG  ASP A0021A004" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A004" and " CA  ASP A0021A000":    0.908, dist=  2.8140
+Large vdw btw " CG  ASP A0021A005" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A005" and " CA  ASP A0021A000":    0.683, dist=  2.8140
+Large vdw btw " OG1 THR A0022A001" and " N   THR A0022A000":    0.799, dist=  2.8050
+Large vdw btw " OG1 THR A0022A002" and " N   THR A0022A000":    0.799, dist=  2.8050
+Large vdw btw " CG1 VAL A0023A001" and " N   VAL A0023A000":    0.510, dist=  2.9730
+Large vdw btw " CG2 VAL A0023A001" and " N   VAL A0023A000":    0.522, dist=  2.9694
+Large vdw btw " CG2 VAL A0023A001" and " C   VAL A0023A000":    0.654, dist=  2.9375
+Large vdw btw " CG  TYR A0027A001" and " CZ  TYR A0027A001":    1.212, dist=  2.8004
+Large vdw btw " CD1 TYR A0027A001" and " CE2 TYR A0027A001":    1.369, dist=  2.7772
+Large vdw btw " CD2 TYR A0027A001" and " CE1 TYR A0027A001":    1.381, dist=  2.7755
+Large vdw btw " CE1 TYR A0027A001" and " CD2 TYR A0027A001":    1.381, dist=  2.7755
+Large vdw btw " CE2 TYR A0027A001" and " CD1 TYR A0027A001":    1.369, dist=  2.7772
+Large vdw btw " CZ  TYR A0027A001" and " CG  TYR A0027A001":    1.212, dist=  2.8004
+Large vdw btw " CG  TYR A0027A001" and " C   TYR A0027A000":    0.531, dist=  2.9534
+Large vdw btw " CG  TYR A0027A002" and " CZ  TYR A0027A002":    1.212, dist=  2.8004
+Large vdw btw " CD1 TYR A0027A002" and " CE2 TYR A0027A002":    1.369, dist=  2.7772
+Large vdw btw " CD2 TYR A0027A002" and " CE1 TYR A0027A002":    1.381, dist=  2.7755
+Large vdw btw " CE1 TYR A0027A002" and " CD2 TYR A0027A002":    1.381, dist=  2.7755
+Large vdw btw " CE2 TYR A0027A002" and " CD1 TYR A0027A002":    1.369, dist=  2.7772
+Large vdw btw " CZ  TYR A0027A002" and " CG  TYR A0027A002":    1.212, dist=  2.8004
+Large vdw btw " CG  TYR A0027A002" and " C   TYR A0027A000":    0.531, dist=  2.9534
+Large vdw btw " CG  TYR A0027A003" and " CZ  TYR A0027A003":    1.212, dist=  2.8004
+Large vdw btw " CD1 TYR A0027A003" and " CE2 TYR A0027A003":    1.369, dist=  2.7772
+Large vdw btw " CD2 TYR A0027A003" and " CE1 TYR A0027A003":    1.381, dist=  2.7755
+Large vdw btw " CE1 TYR A0027A003" and " CD2 TYR A0027A003":    1.381, dist=  2.7755
+Large vdw btw " CE2 TYR A0027A003" and " CD1 TYR A0027A003":    1.369, dist=  2.7772
+Large vdw btw " CZ  TYR A0027A003" and " CG  TYR A0027A003":    1.212, dist=  2.8004
+Large vdw btw " CG  TYR A0027A003" and " C   TYR A0027A000":    0.531, dist=  2.9534
+Large vdw btw " CB  LYS A0028A001" and " O   LYS A0028A000":    1.018, dist=  2.7482
+Large vdw btw " CB  LYS A0028A002" and " O   LYS A0028A000":    1.018, dist=  2.7482
+Large vdw btw " CB  GLN A0030A001" and " OE1 GLN A0030A001":    0.905, dist=  2.7679
+Large vdw btw "1HB  GLN A0030A001" and " CD  GLN A0030A001":    0.540, dist=  2.4844
+Large vdw btw " CD  GLN A0030A001" and "1HB  GLN A0030A001":    0.540, dist=  2.4844
+Large vdw btw " OE1 GLN A0030A001" and " CB  GLN A0030A001":    0.905, dist=  2.7679
+Large vdw btw "1HB  GLN A0030A001" and " C   GLN A0030A000":    0.756, dist=  2.4270
+Large vdw btw "2HB  GLN A0030A001" and " N   GLN A0030A000":    0.614, dist=  2.4578
+Large vdw btw " CD  PRO A0031A001" and " CA  GLN A0030A000":    0.953, dist=  2.8907
+Large vdw btw " CD  PRO A0031A002" and " CA  GLN A0030A000":    0.761, dist=  2.9319
+Large vdw btw " CG2 THR A0033A001" and " C   THR A0033A000":    0.586, dist=  2.9571
+Large vdw btw " CG  PHE A0034A001" and " CZ  PHE A0034A001":    1.165, dist=  2.8079
+Large vdw btw " CD1 PHE A0034A001" and " CE2 PHE A0034A001":    1.291, dist=  2.7884
+Large vdw btw " CD2 PHE A0034A001" and " CE1 PHE A0034A001":    1.353, dist=  2.7795
+Large vdw btw " CE1 PHE A0034A001" and " CD2 PHE A0034A001":    1.353, dist=  2.7795
+Large vdw btw " CE2 PHE A0034A001" and " CD1 PHE A0034A001":    1.291, dist=  2.7884
+Large vdw btw " CZ  PHE A0034A001" and " CG  PHE A0034A001":    1.165, dist=  2.8079
+Large vdw btw "1HB  PHE A0034A001" and " C   PHE A0034A000":    0.538, dist=  2.4849
+Large vdw btw " CD  ARG A0035A001" and " NH1 ARG A0035A001":    1.116, dist=  2.8383
+Large vdw btw " NH1 ARG A0035A001" and " CD  ARG A0035A001":    1.116, dist=  2.8383
+Large vdw btw " CD  ARG A0035A002" and " NH1 ARG A0035A002":    1.116, dist=  2.8383
+Large vdw btw " NH1 ARG A0035A002" and " CD  ARG A0035A002":    1.116, dist=  2.8383
+Large vdw btw " CD  ARG A0035A003" and " NH1 ARG A0035A003":    1.116, dist=  2.8383
+Large vdw btw " NH1 ARG A0035A003" and " CD  ARG A0035A003":    1.116, dist=  2.8383
+Large vdw btw " CD  ARG A0035A004" and " NH1 ARG A0035A004":    1.116, dist=  2.8383
+Large vdw btw " NH1 ARG A0035A004" and " CD  ARG A0035A004":    1.116, dist=  2.8383
+Large vdw btw " CD  ARG A0035A005" and " NH1 ARG A0035A005":    1.116, dist=  2.8383
+Large vdw btw " NH1 ARG A0035A005" and " CD  ARG A0035A005":    1.116, dist=  2.8383
+Large vdw btw "1HB  LEU A0037A001" and " C   LEU A0037A000":    0.709, dist=  2.4380
+Large vdw btw " CB  LEU A0038A001" and " O   LEU A0038A000":    0.744, dist=  2.8000
+Large vdw btw " CG1 VAL A0039A001" and " N   VAL A0039A000":    0.583, dist=  2.9511
+Large vdw btw " CG2 VAL A0039A001" and " C   VAL A0039A000":    0.747, dist=  2.9134
+Large vdw btw " OD1 ASP A0040A001" and " CA  ASP A0040A000":    1.057, dist=  2.7879
+Large vdw btw " OD1 ASP A0040A002" and " CA  ASP A0040A000":    1.057, dist=  2.7879
+Large vdw btw " OD1 ASP A0040A003" and " CA  ASP A0040A000":    0.802, dist=  2.7879
+Large vdw btw " OD1 ASP A0040A004" and " CA  ASP A0040A000":    0.802, dist=  2.7879
+Large vdw btw " OD1 ASP A0040A005" and " CA  ASP A0040A000":    0.802, dist=  2.7879
+Large vdw btw " OG1 THR A0041A001" and " N   THR A0041A000":    0.520, dist=  2.8704
+Large vdw btw " OG1 THR A0041A002" and " N   THR A0041A000":    0.520, dist=  2.8704
+Large vdw btw " OG1 THR A0041A003" and " N   THR A0041A000":    0.520, dist=  2.8704
+Large vdw btw " CD  PRO A0042A001" and " CA  THR A0041A000":    0.656, dist=  2.9584
+Large vdw btw " CB  GLU A0043A001" and " OE1 GLU A0043A001":    1.075, dist=  2.7851
+Large vdw btw " OE1 GLU A0043A001" and " CB  GLU A0043A001":    1.075, dist=  2.7851
+Large vdw btw " CB  GLU A0043A002" and " OE1 GLU A0043A002":    1.075, dist=  2.7851
+Large vdw btw " OE1 GLU A0043A002" and " CB  GLU A0043A002":    1.075, dist=  2.7851
+Large vdw btw " CB  GLU A0043A003" and " OE1 GLU A0043A003":    0.816, dist=  2.7851
+Large vdw btw " OE1 GLU A0043A003" and " CB  GLU A0043A003":    0.816, dist=  2.7851
+Large vdw btw " CB  GLU A0043A004" and " OE1 GLU A0043A004":    0.816, dist=  2.7851
+Large vdw btw " OE1 GLU A0043A004" and " CB  GLU A0043A004":    0.816, dist=  2.7851
+Large vdw btw " CB  GLU A0043A005" and " OE1 GLU A0043A005":    0.816, dist=  2.7851
+Large vdw btw " OE1 GLU A0043A005" and " CB  GLU A0043A005":    0.816, dist=  2.7851
+Large vdw btw " CG  PHE A0050A001" and " CZ  PHE A0050A001":    1.194, dist=  2.8032
+Large vdw btw " CD1 PHE A0050A001" and " CE2 PHE A0050A001":    1.382, dist=  2.7754
+Large vdw btw " CD2 PHE A0050A001" and " CE1 PHE A0050A001":    1.378, dist=  2.7759
+Large vdw btw " CE1 PHE A0050A001" and " CD2 PHE A0050A001":    1.378, dist=  2.7759
+Large vdw btw " CE2 PHE A0050A001" and " CD1 PHE A0050A001":    1.382, dist=  2.7754
+Large vdw btw " CZ  PHE A0050A001" and " CG  PHE A0050A001":    1.194, dist=  2.8032
+Large vdw btw " CG  ASN A0051A001" and " N   ASN A0051A000":    0.553, dist=  2.9399
+Large vdw btw " CG  ASN A0051A002" and " N   ASN A0051A000":    0.553, dist=  2.9399
+Large vdw btw " CB  GLU A0052A001" and " OE1 GLU A0052A001":    0.863, dist=  2.8225
+Large vdw btw " OE1 GLU A0052A001" and " CB  GLU A0052A001":    0.863, dist=  2.8225
+Large vdw btw " CG  GLU A0052A001" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CB  GLU A0052A002" and " OE1 GLU A0052A002":    0.863, dist=  2.8225
+Large vdw btw " OE1 GLU A0052A002" and " CB  GLU A0052A002":    0.863, dist=  2.8225
+Large vdw btw " CG  GLU A0052A002" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CB  GLU A0052A003" and " OE1 GLU A0052A003":    0.647, dist=  2.8225
+Large vdw btw " OE1 GLU A0052A003" and " CB  GLU A0052A003":    0.647, dist=  2.8225
+Large vdw btw " CG  GLU A0052A003" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CB  GLU A0052A004" and " OE1 GLU A0052A004":    0.647, dist=  2.8225
+Large vdw btw " OE1 GLU A0052A004" and " CB  GLU A0052A004":    0.647, dist=  2.8225
+Large vdw btw " CG  GLU A0052A004" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CB  GLU A0052A005" and " OE1 GLU A0052A005":    0.647, dist=  2.8225
+Large vdw btw " OE1 GLU A0052A005" and " CB  GLU A0052A005":    0.647, dist=  2.8225
+Large vdw btw " CG  GLU A0052A005" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CG  TYR A0054A001" and " CZ  TYR A0054A001":    1.228, dist=  2.7979
+Large vdw btw " CD1 TYR A0054A001" and " CE2 TYR A0054A001":    1.404, dist=  2.7724
+Large vdw btw " CD2 TYR A0054A001" and " CE1 TYR A0054A001":    1.394, dist=  2.7738
+Large vdw btw " CE1 TYR A0054A001" and " CD2 TYR A0054A001":    1.394, dist=  2.7738
+Large vdw btw " CE2 TYR A0054A001" and " CD1 TYR A0054A001":    1.404, dist=  2.7724
+Large vdw btw " CZ  TYR A0054A001" and " CG  TYR A0054A001":    1.228, dist=  2.7979
+Large vdw btw " CG  TYR A0054A002" and " CZ  TYR A0054A002":    1.228, dist=  2.7979
+Large vdw btw " CD1 TYR A0054A002" and " CE2 TYR A0054A002":    1.404, dist=  2.7724
+Large vdw btw " CD2 TYR A0054A002" and " CE1 TYR A0054A002":    1.394, dist=  2.7738
+Large vdw btw " CE1 TYR A0054A002" and " CD2 TYR A0054A002":    1.394, dist=  2.7738
+Large vdw btw " CE2 TYR A0054A002" and " CD1 TYR A0054A002":    1.404, dist=  2.7724
+Large vdw btw " CZ  TYR A0054A002" and " CG  TYR A0054A002":    1.228, dist=  2.7979
+Large vdw btw " CG  TYR A0054A003" and " CZ  TYR A0054A003":    1.228, dist=  2.7979
+Large vdw btw " CD1 TYR A0054A003" and " CE2 TYR A0054A003":    1.404, dist=  2.7724
+Large vdw btw " CD2 TYR A0054A003" and " CE1 TYR A0054A003":    1.394, dist=  2.7738
+Large vdw btw " CE1 TYR A0054A003" and " CD2 TYR A0054A003":    1.394, dist=  2.7738
+Large vdw btw " CE2 TYR A0054A003" and " CD1 TYR A0054A003":    1.404, dist=  2.7724
+Large vdw btw " CZ  TYR A0054A003" and " CG  TYR A0054A003":    1.228, dist=  2.7979
+Large vdw btw " CD  PRO A0056A001" and " CA  GLY A0055A000":    0.630, dist=  2.9658
+Large vdw btw " CB  GLU A0057A001" and " OE1 GLU A0057A001":    0.787, dist=  2.8379
+Large vdw btw " OE1 GLU A0057A001" and " CB  GLU A0057A001":    0.787, dist=  2.8379
+Large vdw btw " CB  GLU A0057A002" and " OE1 GLU A0057A002":    0.787, dist=  2.8379
+Large vdw btw " OE1 GLU A0057A002" and " CB  GLU A0057A002":    0.787, dist=  2.8379
+Large vdw btw " CB  GLU A0057A003" and " OE1 GLU A0057A003":    0.587, dist=  2.8379
+Large vdw btw " OE1 GLU A0057A003" and " CB  GLU A0057A003":    0.587, dist=  2.8379
+Large vdw btw " CB  GLU A0057A004" and " OE1 GLU A0057A004":    0.587, dist=  2.8379
+Large vdw btw " OE1 GLU A0057A004" and " CB  GLU A0057A004":    0.587, dist=  2.8379
+Large vdw btw " CB  GLU A0057A005" and " OE1 GLU A0057A005":    0.587, dist=  2.8379
+Large vdw btw " OE1 GLU A0057A005" and " CB  GLU A0057A005":    0.587, dist=  2.8379
+Large vdw btw " CG  PHE A0061A001" and " CZ  PHE A0061A001":    1.187, dist=  2.8043
+Large vdw btw " CD1 PHE A0061A001" and " CE2 PHE A0061A001":    1.359, dist=  2.7786
+Large vdw btw " CD2 PHE A0061A001" and " CE1 PHE A0061A001":    1.374, dist=  2.7765
+Large vdw btw " CE1 PHE A0061A001" and " CD2 PHE A0061A001":    1.374, dist=  2.7765
+Large vdw btw " CE2 PHE A0061A001" and " CD1 PHE A0061A001":    1.359, dist=  2.7786
+Large vdw btw " CZ  PHE A0061A001" and " CG  PHE A0061A001":    1.187, dist=  2.8043
+Large vdw btw " CG2 THR A0062A001" and " C   THR A0062A000":    0.810, dist=  2.8986
+Large vdw btw " CG2 THR A0062A002" and " C   THR A0062A000":    0.810, dist=  2.8986
+Large vdw btw "1HB  LYS A0064A001" and " C   LYS A0064A000":    0.853, dist=  2.4063
+Large vdw btw "2HB  LYS A0064A001" and " N   LYS A0064A000":    0.829, dist=  2.4083
+Large vdw btw "1HB  LYS A0064A002" and " C   LYS A0064A000":    0.853, dist=  2.4063
+Large vdw btw "2HB  LYS A0064A002" and " N   LYS A0064A000":    0.829, dist=  2.4083
+Large vdw btw " CG1 VAL A0066A001" and " N   VAL A0066A000":    0.632, dist=  2.9376
+Large vdw btw " CB  GLU A0067A001" and " OE2 GLU A0067A001":    0.927, dist=  2.7638
+Large vdw btw " OE2 GLU A0067A001" and " CB  GLU A0067A001":    0.927, dist=  2.7638
+Large vdw btw " CB  GLU A0067A002" and " OE2 GLU A0067A002":    0.927, dist=  2.7638
+Large vdw btw " OE2 GLU A0067A002" and " CB  GLU A0067A002":    0.927, dist=  2.7638
+Large vdw btw " CB  GLU A0067A003" and " OE2 GLU A0067A003":    1.215, dist=  2.7638
+Large vdw btw " OE2 GLU A0067A003" and " CB  GLU A0067A003":    1.215, dist=  2.7638
+Large vdw btw " CB  GLU A0067A004" and " OE2 GLU A0067A004":    1.215, dist=  2.7638
+Large vdw btw " OE2 GLU A0067A004" and " CB  GLU A0067A004":    1.215, dist=  2.7638
+Large vdw btw " CB  GLU A0067A005" and " OE2 GLU A0067A005":    0.927, dist=  2.7638
+Large vdw btw " OE2 GLU A0067A005" and " CB  GLU A0067A005":    0.927, dist=  2.7638
+Large vdw btw "2HB  ASN A0068A001" and " ND2 ASN A0068A001":    0.573, dist=  2.4690
+Large vdw btw " ND2 ASN A0068A001" and "2HB  ASN A0068A001":    0.573, dist=  2.4690
+Large vdw btw " ND2 ASN A0068A002" and " CA  ASN A0068A000":    0.729, dist=  2.9134
+Large vdw btw " CG1 ILE A0072A001" and " N   ILE A0072A000":    0.562, dist=  2.9572
+Large vdw btw " CG2 ILE A0072A001" and " C   ILE A0072A000":    0.510, dist=  2.9818
+Large vdw btw " CG2 ILE A0072A002" and " CD1 ILE A0072A002":    0.778, dist=  2.9278
+Large vdw btw " CD1 ILE A0072A002" and " CG2 ILE A0072A002":    0.778, dist=  2.9278
+Large vdw btw " CG1 ILE A0072A002" and " N   ILE A0072A000":    0.562, dist=  2.9572
+Large vdw btw " CG2 ILE A0072A002" and " C   ILE A0072A000":    0.510, dist=  2.9818
+Large vdw btw " CG2 VAL A0074A001" and " N   VAL A0074A000":    0.510, dist=  2.9730
+Large vdw btw " CG  PHE A0076A001" and " CZ  PHE A0076A001":    1.192, dist=  2.8036
+Large vdw btw " CD1 PHE A0076A001" and " CE2 PHE A0076A001":    1.355, dist=  2.7791
+Large vdw btw " CD2 PHE A0076A001" and " CE1 PHE A0076A001":    1.361, dist=  2.7783
+Large vdw btw " CE1 PHE A0076A001" and " CD2 PHE A0076A001":    1.361, dist=  2.7783
+Large vdw btw " CE2 PHE A0076A001" and " CD1 PHE A0076A001":    1.355, dist=  2.7791
+Large vdw btw " CZ  PHE A0076A001" and " CG  PHE A0076A001":    1.192, dist=  2.8036
+Large vdw btw " CB  ASP A0077A001" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  ASP A0077A002" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  ASP A0077A003" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  ASP A0077A004" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  ASP A0077A005" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  GLN A0080A001" and " OE1 GLN A0080A001":    0.603, dist=  2.8338
+Large vdw btw " OE1 GLN A0080A001" and " CB  GLN A0080A001":    0.603, dist=  2.8338
+Large vdw btw " CG  GLN A0080A001" and " N   GLN A0080A000":    0.698, dist=  2.9208
+Large vdw btw " CB  GLN A0080A002" and " NE2 GLN A0080A002":    1.145, dist=  2.8338
+Large vdw btw " NE2 GLN A0080A002" and " CB  GLN A0080A002":    1.145, dist=  2.8338
+Large vdw btw " CG  GLN A0080A002" and " N   GLN A0080A000":    0.698, dist=  2.9208
+Large vdw btw " CD  ARG A0081A001" and " NH1 ARG A0081A001":    1.187, dist=  2.8272
+Large vdw btw " NH1 ARG A0081A001" and " CD  ARG A0081A001":    1.187, dist=  2.8272
+Large vdw btw " CD  ARG A0081A002" and " NH1 ARG A0081A002":    1.187, dist=  2.8272
+Large vdw btw " NH1 ARG A0081A002" and " CD  ARG A0081A002":    1.187, dist=  2.8272
+Large vdw btw " CD  ARG A0081A003" and " NH1 ARG A0081A003":    1.187, dist=  2.8272
+Large vdw btw " NH1 ARG A0081A003" and " CD  ARG A0081A003":    1.187, dist=  2.8272
+Large vdw btw " CD  ARG A0081A004" and " NH1 ARG A0081A004":    1.187, dist=  2.8272
+Large vdw btw " NH1 ARG A0081A004" and " CD  ARG A0081A004":    1.187, dist=  2.8272
+Large vdw btw " OG1 THR A0082A001" and " C   THR A0082A000":    1.155, dist=  2.7516
+Large vdw btw " CG2 THR A0082A001" and " N   THR A0082A000":    0.694, dist=  2.9218
+Large vdw btw " OG1 THR A0082A002" and " C   THR A0082A000":    1.155, dist=  2.7516
+Large vdw btw " CG2 THR A0082A002" and " N   THR A0082A000":    0.694, dist=  2.9218
+Large vdw btw " OD1 ASP A0083A001" and " CA  ASP A0083A000":    0.808, dist=  2.8334
+Large vdw btw " CB  ASP A0083A001" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " OD1 ASP A0083A002" and " CA  ASP A0083A000":    0.808, dist=  2.8334
+Large vdw btw " CB  ASP A0083A002" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " OD1 ASP A0083A003" and " CA  ASP A0083A000":    0.604, dist=  2.8334
+Large vdw btw " CB  ASP A0083A003" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " OD1 ASP A0083A004" and " CA  ASP A0083A000":    0.604, dist=  2.8334
+Large vdw btw " CB  ASP A0083A004" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " OD1 ASP A0083A005" and " CA  ASP A0083A000":    0.604, dist=  2.8334
+Large vdw btw " CB  ASP A0083A005" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " CG  TYR A0085A001" and " CZ  TYR A0085A001":    1.240, dist=  2.7960
+Large vdw btw " CD1 TYR A0085A001" and " CE2 TYR A0085A001":    1.380, dist=  2.7757
+Large vdw btw " CD2 TYR A0085A001" and " CE1 TYR A0085A001":    1.393, dist=  2.7739
+Large vdw btw " CE1 TYR A0085A001" and " CD2 TYR A0085A001":    1.393, dist=  2.7739
+Large vdw btw " CE2 TYR A0085A001" and " CD1 TYR A0085A001":    1.380, dist=  2.7757
+Large vdw btw " CZ  TYR A0085A001" and " CG  TYR A0085A001":    1.240, dist=  2.7960
+Large vdw btw " CG  TYR A0085A002" and " CZ  TYR A0085A002":    1.240, dist=  2.7960
+Large vdw btw " CD1 TYR A0085A002" and " CE2 TYR A0085A002":    1.380, dist=  2.7757
+Large vdw btw " CD2 TYR A0085A002" and " CE1 TYR A0085A002":    1.393, dist=  2.7739
+Large vdw btw " CE1 TYR A0085A002" and " CD2 TYR A0085A002":    1.393, dist=  2.7739
+Large vdw btw " CE2 TYR A0085A002" and " CD1 TYR A0085A002":    1.380, dist=  2.7757
+Large vdw btw " CZ  TYR A0085A002" and " CG  TYR A0085A002":    1.240, dist=  2.7960
+Large vdw btw " CG  TYR A0085A003" and " CZ  TYR A0085A003":    1.240, dist=  2.7960
+Large vdw btw " CD1 TYR A0085A003" and " CE2 TYR A0085A003":    1.380, dist=  2.7757
+Large vdw btw " CD2 TYR A0085A003" and " CE1 TYR A0085A003":    1.393, dist=  2.7739
+Large vdw btw " CE1 TYR A0085A003" and " CD2 TYR A0085A003":    1.393, dist=  2.7739
+Large vdw btw " CE2 TYR A0085A003" and " CD1 TYR A0085A003":    1.380, dist=  2.7757
+Large vdw btw " CZ  TYR A0085A003" and " CG  TYR A0085A003":    1.240, dist=  2.7960
+Large vdw btw " CD  ARG A0087A001" and " NH1 ARG A0087A001":    1.153, dist=  2.8324
+Large vdw btw " NH1 ARG A0087A001" and " CD  ARG A0087A001":    1.153, dist=  2.8324
+Large vdw btw " CD  ARG A0087A002" and " NH1 ARG A0087A002":    1.153, dist=  2.8324
+Large vdw btw " NH1 ARG A0087A002" and " CD  ARG A0087A002":    1.153, dist=  2.8324
+Large vdw btw " CD  ARG A0087A003" and " NH1 ARG A0087A003":    1.153, dist=  2.8324
+Large vdw btw " NH1 ARG A0087A003" and " CD  ARG A0087A003":    1.153, dist=  2.8324
+Large vdw btw " CD  ARG A0087A004" and " NH1 ARG A0087A004":    1.153, dist=  2.8324
+Large vdw btw " NH1 ARG A0087A004" and " CD  ARG A0087A004":    1.153, dist=  2.8324
+Large vdw btw " CD  ARG A0087A005" and " NH1 ARG A0087A005":    1.153, dist=  2.8324
+Large vdw btw " NH1 ARG A0087A005" and " CD  ARG A0087A005":    1.153, dist=  2.8324
+Large vdw btw " CB  ALA A0090A001" and " N   TYR A0091A000":    0.734, dist=  2.9122
+Large vdw btw " CG  TYR A0091A001" and " CZ  TYR A0091A001":    1.219, dist=  2.7993
+Large vdw btw " CD1 TYR A0091A001" and " CE2 TYR A0091A001":    1.390, dist=  2.7743
+Large vdw btw " CD2 TYR A0091A001" and " CE1 TYR A0091A001":    1.392, dist=  2.7740
+Large vdw btw " CE1 TYR A0091A001" and " CD2 TYR A0091A001":    1.392, dist=  2.7740
+Large vdw btw " CE2 TYR A0091A001" and " CD1 TYR A0091A001":    1.390, dist=  2.7743
+Large vdw btw " CZ  TYR A0091A001" and " CG  TYR A0091A001":    1.219, dist=  2.7993
+Large vdw btw " CG  TYR A0091A001" and " N   TYR A0091A000":    0.535, dist=  2.9454
+Large vdw btw " CG  TYR A0091A002" and " CZ  TYR A0091A002":    1.219, dist=  2.7993
+Large vdw btw " CD1 TYR A0091A002" and " CE2 TYR A0091A002":    1.390, dist=  2.7743
+Large vdw btw " CD2 TYR A0091A002" and " CE1 TYR A0091A002":    1.392, dist=  2.7740
+Large vdw btw " CE1 TYR A0091A002" and " CD2 TYR A0091A002":    1.392, dist=  2.7740
+Large vdw btw " CE2 TYR A0091A002" and " CD1 TYR A0091A002":    1.390, dist=  2.7743
+Large vdw btw " CZ  TYR A0091A002" and " CG  TYR A0091A002":    1.219, dist=  2.7993
+Large vdw btw " CG  TYR A0091A002" and " N   TYR A0091A000":    0.535, dist=  2.9454
+Large vdw btw " CG  TYR A0091A003" and " CZ  TYR A0091A003":    1.219, dist=  2.7993
+Large vdw btw " CD1 TYR A0091A003" and " CE2 TYR A0091A003":    1.390, dist=  2.7743
+Large vdw btw " CD2 TYR A0091A003" and " CE1 TYR A0091A003":    1.392, dist=  2.7740
+Large vdw btw " CE1 TYR A0091A003" and " CD2 TYR A0091A003":    1.392, dist=  2.7740
+Large vdw btw " CE2 TYR A0091A003" and " CD1 TYR A0091A003":    1.390, dist=  2.7743
+Large vdw btw " CZ  TYR A0091A003" and " CG  TYR A0091A003":    1.219, dist=  2.7993
+Large vdw btw " CG  TYR A0091A003" and " N   TYR A0091A000":    0.535, dist=  2.9454
+Large vdw btw " CG  TYR A0093A001" and " CZ  TYR A0093A001":    1.238, dist=  2.7963
+Large vdw btw " CD1 TYR A0093A001" and " CE2 TYR A0093A001":    1.385, dist=  2.7750
+Large vdw btw " CD2 TYR A0093A001" and " CE1 TYR A0093A001":    1.388, dist=  2.7746
+Large vdw btw " CE1 TYR A0093A001" and " CD2 TYR A0093A001":    1.388, dist=  2.7746
+Large vdw btw " CE2 TYR A0093A001" and " CD1 TYR A0093A001":    1.385, dist=  2.7750
+Large vdw btw " CZ  TYR A0093A001" and " CG  TYR A0093A001":    1.238, dist=  2.7963
+Large vdw btw " CG  TYR A0093A002" and " CZ  TYR A0093A002":    1.238, dist=  2.7963
+Large vdw btw " CD1 TYR A0093A002" and " CE2 TYR A0093A002":    1.385, dist=  2.7750
+Large vdw btw " CD2 TYR A0093A002" and " CE1 TYR A0093A002":    1.388, dist=  2.7746
+Large vdw btw " CE1 TYR A0093A002" and " CD2 TYR A0093A002":    1.388, dist=  2.7746
+Large vdw btw " CE2 TYR A0093A002" and " CD1 TYR A0093A002":    1.385, dist=  2.7750
+Large vdw btw " CZ  TYR A0093A002" and " CG  TYR A0093A002":    1.238, dist=  2.7963
+Large vdw btw " CG  TYR A0093A003" and " CZ  TYR A0093A003":    1.238, dist=  2.7963
+Large vdw btw " CD1 TYR A0093A003" and " CE2 TYR A0093A003":    1.385, dist=  2.7750
+Large vdw btw " CD2 TYR A0093A003" and " CE1 TYR A0093A003":    1.388, dist=  2.7746
+Large vdw btw " CE1 TYR A0093A003" and " CD2 TYR A0093A003":    1.388, dist=  2.7746
+Large vdw btw " CE2 TYR A0093A003" and " CD1 TYR A0093A003":    1.385, dist=  2.7750
+Large vdw btw " CZ  TYR A0093A003" and " CG  TYR A0093A003":    1.238, dist=  2.7963
+Large vdw btw " CB  ASP A0095A001" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A001" and " CA  ASP A0095A000":    0.716, dist=  2.8063
+Large vdw btw " CB  ASP A0095A002" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A002" and " CA  ASP A0095A000":    0.716, dist=  2.8063
+Large vdw btw " CB  ASP A0095A003" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A003" and " CA  ASP A0095A000":    0.949, dist=  2.8063
+Large vdw btw " CB  ASP A0095A004" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A004" and " CA  ASP A0095A000":    0.949, dist=  2.8063
+Large vdw btw " CB  ASP A0095A005" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A005" and " CA  ASP A0095A000":    0.716, dist=  2.8063
+Large vdw btw " CG1 VAL A0099A001" and " C   VAL A0099A000":    0.511, dist=  2.9816
+Large vdw btw " CG2 VAL A0099A001" and " N   VAL A0099A000":    0.716, dist=  2.9165
+Large vdw btw "1HB  ASN A0100A001" and " ND2 ASN A0100A001":    0.579, dist=  2.4674
+Large vdw btw " ND2 ASN A0100A001" and "1HB  ASN A0100A001":    0.579, dist=  2.4674
+Large vdw btw " CG  ASN A0100A001" and " N   ASN A0100A000":    0.723, dist=  2.8939
+Large vdw btw " CG  ASN A0100A002" and " N   ASN A0100A000":    0.723, dist=  2.8939
+Large vdw btw " ND2 ASN A0100A002" and " CA  ASN A0100A000":    0.524, dist=  2.9688
+Large vdw btw " CB  GLU A0101A001" and " OE2 GLU A0101A001":    0.986, dist=  2.7536
+Large vdw btw " OE2 GLU A0101A001" and " CB  GLU A0101A001":    0.986, dist=  2.7536
+Large vdw btw " CB  GLU A0101A002" and " OE2 GLU A0101A002":    0.986, dist=  2.7536
+Large vdw btw " OE2 GLU A0101A002" and " CB  GLU A0101A002":    0.986, dist=  2.7536
+Large vdw btw " CB  GLU A0101A003" and " OE2 GLU A0101A003":    1.287, dist=  2.7536
+Large vdw btw " OE2 GLU A0101A003" and " CB  GLU A0101A003":    1.287, dist=  2.7536
+Large vdw btw " CB  GLU A0101A004" and " OE2 GLU A0101A004":    1.287, dist=  2.7536
+Large vdw btw " OE2 GLU A0101A004" and " CB  GLU A0101A004":    1.287, dist=  2.7536
+Large vdw btw " CB  GLU A0101A005" and " OE2 GLU A0101A005":    0.986, dist=  2.7536
+Large vdw btw " OE2 GLU A0101A005" and " CB  GLU A0101A005":    0.986, dist=  2.7536
+Large vdw btw " CG1 VAL A0104A001" and " C   VAL A0104A000":    0.919, dist=  2.8751
+Large vdw btw " CD  ARG A0105A001" and " NH1 ARG A0105A001":    1.111, dist=  2.8392
+Large vdw btw " NH1 ARG A0105A001" and " CD  ARG A0105A001":    1.111, dist=  2.8392
+Large vdw btw " CD  ARG A0105A002" and " NH1 ARG A0105A002":    1.111, dist=  2.8392
+Large vdw btw " NH1 ARG A0105A002" and " CD  ARG A0105A002":    1.111, dist=  2.8392
+Large vdw btw " CD  ARG A0105A003" and " NH1 ARG A0105A003":    1.111, dist=  2.8392
+Large vdw btw " NH1 ARG A0105A003" and " CD  ARG A0105A003":    1.111, dist=  2.8392
+Large vdw btw " CD  ARG A0105A004" and " NH1 ARG A0105A004":    1.111, dist=  2.8392
+Large vdw btw " NH1 ARG A0105A004" and " CD  ARG A0105A004":    1.111, dist=  2.8392
+Large vdw btw " CD  ARG A0105A005" and " NH1 ARG A0105A005":    1.111, dist=  2.8392
+Large vdw btw " NH1 ARG A0105A005" and " CD  ARG A0105A005":    1.111, dist=  2.8392
+Large vdw btw " CD  ARG A0105A006" and " NH1 ARG A0105A006":    1.111, dist=  2.8392
+Large vdw btw " NH1 ARG A0105A006" and " CD  ARG A0105A006":    1.111, dist=  2.8392
+Large vdw btw " CB  GLN A0106A001" and " OE1 GLN A0106A001":    0.679, dist=  2.8150
+Large vdw btw " OE1 GLN A0106A001" and " CB  GLN A0106A001":    0.679, dist=  2.8150
+Large vdw btw "2HB  GLN A0106A001" and " N   GLN A0106A000":    0.590, dist=  2.4643
+Large vdw btw " CB  GLN A0106A002" and " NE2 GLN A0106A002":    1.270, dist=  2.8150
+Large vdw btw " NE2 GLN A0106A002" and " CB  GLN A0106A002":    1.270, dist=  2.8150
+Large vdw btw "2HB  GLN A0106A002" and " N   GLN A0106A000":    0.590, dist=  2.4643
+Large vdw btw " CG1 VAL A0111A001" and " C   VAL A0111A000":    0.633, dist=  2.9435
+Large vdw btw " CG  TYR A0113A001" and " CZ  TYR A0113A001":    1.212, dist=  2.8004
+Large vdw btw " CD1 TYR A0113A001" and " CE2 TYR A0113A001":    1.374, dist=  2.7765
+Large vdw btw " CD2 TYR A0113A001" and " CE1 TYR A0113A001":    1.375, dist=  2.7763
+Large vdw btw " CE1 TYR A0113A001" and " CD2 TYR A0113A001":    1.375, dist=  2.7763
+Large vdw btw " CE2 TYR A0113A001" and " CD1 TYR A0113A001":    1.374, dist=  2.7765
+Large vdw btw " CZ  TYR A0113A001" and " CG  TYR A0113A001":    1.212, dist=  2.8004
+Large vdw btw " CB  TYR A0113A001" and " O   TYR A0113A000":    0.948, dist=  2.7601
+Large vdw btw " CG  TYR A0113A001" and " N   TYR A0113A000":    0.539, dist=  2.9442
+Large vdw btw " CG  TYR A0113A002" and " CZ  TYR A0113A002":    1.212, dist=  2.8004
+Large vdw btw " CD1 TYR A0113A002" and " CE2 TYR A0113A002":    1.374, dist=  2.7765
+Large vdw btw " CD2 TYR A0113A002" and " CE1 TYR A0113A002":    1.375, dist=  2.7763
+Large vdw btw " CE1 TYR A0113A002" and " CD2 TYR A0113A002":    1.375, dist=  2.7763
+Large vdw btw " CE2 TYR A0113A002" and " CD1 TYR A0113A002":    1.374, dist=  2.7765
+Large vdw btw " CZ  TYR A0113A002" and " CG  TYR A0113A002":    1.212, dist=  2.8004
+Large vdw btw " CB  TYR A0113A002" and " O   TYR A0113A000":    0.948, dist=  2.7601
+Large vdw btw " CG  TYR A0113A002" and " N   TYR A0113A000":    0.539, dist=  2.9442
+Large vdw btw " CG  TYR A0113A003" and " CZ  TYR A0113A003":    1.212, dist=  2.8004
+Large vdw btw " CD1 TYR A0113A003" and " CE2 TYR A0113A003":    1.374, dist=  2.7765
+Large vdw btw " CD2 TYR A0113A003" and " CE1 TYR A0113A003":    1.375, dist=  2.7763
+Large vdw btw " CE1 TYR A0113A003" and " CD2 TYR A0113A003":    1.375, dist=  2.7763
+Large vdw btw " CE2 TYR A0113A003" and " CD1 TYR A0113A003":    1.374, dist=  2.7765
+Large vdw btw " CZ  TYR A0113A003" and " CG  TYR A0113A003":    1.212, dist=  2.8004
+Large vdw btw " CB  TYR A0113A003" and " O   TYR A0113A000":    0.948, dist=  2.7601
+Large vdw btw " CG  TYR A0113A003" and " N   TYR A0113A000":    0.539, dist=  2.9442
+Large vdw btw " CB  VAL A0114A001" and " O   VAL A0114A000":    0.552, dist=  2.8476
+Large vdw btw " CG2 VAL A0114A001" and " N   VAL A0114A000":    1.021, dist=  2.8542
+Large vdw btw " CG  TYR A0115A001" and " CZ  TYR A0115A001":    1.191, dist=  2.8037
+Large vdw btw " CD1 TYR A0115A001" and " CE2 TYR A0115A001":    1.374, dist=  2.7764
+Large vdw btw " CD2 TYR A0115A001" and " CE1 TYR A0115A001":    1.382, dist=  2.7754
+Large vdw btw " CE1 TYR A0115A001" and " CD2 TYR A0115A001":    1.382, dist=  2.7754
+Large vdw btw " CE2 TYR A0115A001" and " CD1 TYR A0115A001":    1.374, dist=  2.7764
+Large vdw btw " CZ  TYR A0115A001" and " CG  TYR A0115A001":    1.191, dist=  2.8037
+Large vdw btw " CG  TYR A0115A002" and " CZ  TYR A0115A002":    1.191, dist=  2.8037
+Large vdw btw " CD1 TYR A0115A002" and " CE2 TYR A0115A002":    1.374, dist=  2.7764
+Large vdw btw " CD2 TYR A0115A002" and " CE1 TYR A0115A002":    1.382, dist=  2.7754
+Large vdw btw " CE1 TYR A0115A002" and " CD2 TYR A0115A002":    1.382, dist=  2.7754
+Large vdw btw " CE2 TYR A0115A002" and " CD1 TYR A0115A002":    1.374, dist=  2.7764
+Large vdw btw " CZ  TYR A0115A002" and " CG  TYR A0115A002":    1.191, dist=  2.8037
+Large vdw btw " CB  ASN A0118A001" and " O   ASN A0118A000":    1.371, dist=  2.6972
+Large vdw btw "1HB  ASN A0118A001" and " C   ASN A0118A000":    0.525, dist=  2.4893
+Large vdw btw " OD1 ASN A0118A001" and " CA  ASN A0118A000":    0.724, dist=  2.8046
+Large vdw btw " CB  ASN A0119A001" and " O   ASN A0119A000":    0.900, dist=  2.7688
+Large vdw btw " OD1 ASN A0119A001" and " CA  ASN A0119A000":    0.686, dist=  2.8133
+Large vdw btw " CB  ASN A0119A002" and " O   ASN A0119A000":    0.900, dist=  2.7688
+Large vdw btw " ND2 ASN A0119A002" and " CA  ASN A0119A000":    1.282, dist=  2.8133
+Large vdw btw " CG2 THR A0120A001" and " C   THR A0120A000":    1.142, dist=  2.8345
+Large vdw btw " CG2 THR A0120A002" and " C   THR A0120A000":    1.142, dist=  2.8345
+Large vdw btw " CG2 THR A0120A003" and " C   THR A0120A000":    1.142, dist=  2.8345
+Large vdw btw " CB  HIS A0121A001" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A002" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A003" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A004" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A005" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A006" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  GLU A0122A001" and " OE2 GLU A0122A001":    0.924, dist=  2.7645
+Large vdw btw " OE2 GLU A0122A001" and " CB  GLU A0122A001":    0.924, dist=  2.7645
+Large vdw btw " CG  GLU A0122A001" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CB  GLU A0122A002" and " OE2 GLU A0122A002":    0.924, dist=  2.7645
+Large vdw btw " OE2 GLU A0122A002" and " CB  GLU A0122A002":    0.924, dist=  2.7645
+Large vdw btw " CG  GLU A0122A002" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CB  GLU A0122A003" and " OE2 GLU A0122A003":    1.210, dist=  2.7645
+Large vdw btw " OE2 GLU A0122A003" and " CB  GLU A0122A003":    1.210, dist=  2.7645
+Large vdw btw " CG  GLU A0122A003" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CB  GLU A0122A004" and " OE2 GLU A0122A004":    1.210, dist=  2.7645
+Large vdw btw " OE2 GLU A0122A004" and " CB  GLU A0122A004":    1.210, dist=  2.7645
+Large vdw btw " CG  GLU A0122A004" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CB  GLU A0122A005" and " OE2 GLU A0122A005":    0.924, dist=  2.7645
+Large vdw btw " OE2 GLU A0122A005" and " CB  GLU A0122A005":    0.924, dist=  2.7645
+Large vdw btw " CG  GLU A0122A005" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw "2HG  GLN A0123A001" and " NE2 GLN A0123A001":    0.573, dist=  2.4690
+Large vdw btw " NE2 GLN A0123A001" and "2HG  GLN A0123A001":    0.573, dist=  2.4690
+Large vdw btw " CD  GLN A0123A001" and " CA  GLN A0123A000":    0.548, dist=  2.9692
+Large vdw btw " CD  GLN A0123A002" and " CA  GLN A0123A000":    0.548, dist=  2.9692
+Large vdw btw " CD  ARG A0126A001" and " NH1 ARG A0126A001":    1.094, dist=  2.8419
+Large vdw btw " NH1 ARG A0126A001" and " CD  ARG A0126A001":    1.094, dist=  2.8419
+Large vdw btw " CD  ARG A0126A002" and " NH1 ARG A0126A002":    1.094, dist=  2.8419
+Large vdw btw " NH1 ARG A0126A002" and " CD  ARG A0126A002":    1.094, dist=  2.8419
+Large vdw btw " CD  ARG A0126A003" and " NH1 ARG A0126A003":    1.094, dist=  2.8419
+Large vdw btw " NH1 ARG A0126A003" and " CD  ARG A0126A003":    1.094, dist=  2.8419
+Large vdw btw " CD  ARG A0126A004" and " NH1 ARG A0126A004":    1.094, dist=  2.8419
+Large vdw btw " NH1 ARG A0126A004" and " CD  ARG A0126A004":    1.094, dist=  2.8419
+Large vdw btw " CD  ARG A0126A005" and " NH1 ARG A0126A005":    1.094, dist=  2.8419
+Large vdw btw " NH1 ARG A0126A005" and " CD  ARG A0126A005":    1.094, dist=  2.8419
+Large vdw btw " CG  LYS A0127A001" and " NZ  LYS A0127A001":    0.527, dist=  2.9678
+Large vdw btw " NZ  LYS A0127A001" and " CG  LYS A0127A001":    0.527, dist=  2.9678
+Large vdw btw " CG  LYS A0127A001" and " C   LYS A0127A000":    0.699, dist=  2.9253
+Large vdw btw " CG  LYS A0127A002" and " NZ  LYS A0127A002":    0.527, dist=  2.9678
+Large vdw btw " NZ  LYS A0127A002" and " CG  LYS A0127A002":    0.527, dist=  2.9678
+Large vdw btw " CG  LYS A0127A002" and " C   LYS A0127A000":    0.699, dist=  2.9253
+Large vdw btw " CB  GLN A0131A001" and " OE1 GLN A0131A001":    0.509, dist=  2.8600
+Large vdw btw " OE1 GLN A0131A001" and " CB  GLN A0131A001":    0.509, dist=  2.8600
+Large vdw btw " CB  GLN A0131A002" and " NE2 GLN A0131A002":    0.988, dist=  2.8600
+Large vdw btw " NE2 GLN A0131A002" and " CB  GLN A0131A002":    0.988, dist=  2.8600
+Large vdw btw " CB  GLU A0135A001" and " OE1 GLU A0135A001":    1.351, dist=  2.7452
+Large vdw btw " OE1 GLU A0135A001" and " CB  GLU A0135A001":    1.351, dist=  2.7452
+Large vdw btw " CB  GLU A0135A002" and " OE1 GLU A0135A002":    1.351, dist=  2.7452
+Large vdw btw " OE1 GLU A0135A002" and " CB  GLU A0135A002":    1.351, dist=  2.7452
+Large vdw btw " CB  GLU A0135A003" and " OE1 GLU A0135A003":    1.036, dist=  2.7452
+Large vdw btw " OE1 GLU A0135A003" and " CB  GLU A0135A003":    1.036, dist=  2.7452
+Large vdw btw " CB  GLU A0135A004" and " OE1 GLU A0135A004":    1.036, dist=  2.7452
+Large vdw btw " OE1 GLU A0135A004" and " CB  GLU A0135A004":    1.036, dist=  2.7452
+Large vdw btw " CB  GLU A0135A005" and " OE1 GLU A0135A005":    1.036, dist=  2.7452
+Large vdw btw " OE1 GLU A0135A005" and " CB  GLU A0135A005":    1.036, dist=  2.7452
+Large vdw btw " CB  LYS A0136A001" and " O   LYS A0136A000":    1.277, dist=  2.7095
+Large vdw btw " CG  LYS A0136A001" and " N   LYS A0136A000":    1.247, dist=  2.8182
+Large vdw btw " CB  LYS A0136A002" and " O   LYS A0136A000":    1.277, dist=  2.7095
+Large vdw btw " CG  LYS A0136A002" and " N   LYS A0136A000":    1.247, dist=  2.8182
+Large vdw btw "2HB  ASN A0138A001" and " ND2 ASN A0138A001":    0.575, dist=  2.4686
+Large vdw btw " ND2 ASN A0138A001" and "2HB  ASN A0138A001":    0.575, dist=  2.4686
+Large vdw btw " CG  ASN A0138A001" and " N   ASN A0138A000":    0.586, dist=  2.9299
+Large vdw btw " CB  ASN A0138A001" and " N   ILE A0139A000":    1.598, dist=  2.7729
+Large vdw btw " CG  ASN A0138A002" and " N   ASN A0138A000":    0.586, dist=  2.9299
+Large vdw btw " CB  ASN A0138A002" and " N   ILE A0139A000":    1.598, dist=  2.7729
+Large vdw btw " CG2 ILE A0139A001" and " C   ILE A0139A000":    1.434, dist=  2.7913
+Large vdw btw " CD2 TRP A0140A001" and " CH2 TRP A0140A001":    1.270, dist=  2.7915
+Large vdw btw " CE2 TRP A0140A001" and " CZ3 TRP A0140A001":    1.543, dist=  2.7542
+Large vdw btw " CE3 TRP A0140A001" and " CZ2 TRP A0140A001":    0.981, dist=  2.8404
+Large vdw btw " CZ2 TRP A0140A001" and " CE3 TRP A0140A001":    0.981, dist=  2.8404
+Large vdw btw " CZ3 TRP A0140A001" and " CE2 TRP A0140A001":    1.543, dist=  2.7542
+Large vdw btw " CH2 TRP A0140A001" and " CD2 TRP A0140A001":    1.270, dist=  2.7915
+Large vdw btw " CG  TRP A0140A001" and " N   TRP A0140A000":    0.957, dist=  2.8443
+   Done
+
+   Computing RXN from conformer 1 to 283 of 283 total conformers
+      see progress.log for progress...
+Large vdw btw " N   NTR A0006A001" and " O   LYS A0006A000":    0.658, dist=  2.7873
+Large vdw btw " N   NTR A0006A002" and " O   LYS A0006A000":    0.658, dist=  2.7873
+Large vdw btw " CG  LYS A0006A001" and " C   LYS A0006A000":    0.548, dist=  2.9692
+Large vdw btw " CG  LYS A0006A002" and " C   LYS A0006A000":    0.548, dist=  2.9692
+Large vdw btw "1HB  LEU A0007A001" and " C   LEU A0007A000":    0.562, dist=  2.4776
+Large vdw btw "2HB  LEU A0007A001" and " N   LEU A0007A000":    0.523, dist=  2.4840
+Large vdw btw " CD1 LEU A0007A001" and " CA  LEU A0007A000":    0.550, dist=  2.9897
+Large vdw btw " CG  LYS A0009A001" and " N   LYS A0009A000":    0.505, dist=  2.9746
+Large vdw btw " CG  LYS A0009A002" and " N   LYS A0009A000":    0.505, dist=  2.9746
+Large vdw btw " CG  GLU A0010A001" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CG  GLU A0010A002" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CG  GLU A0010A003" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CG  GLU A0010A004" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CG  GLU A0010A005" and " N   GLU A0010A000":    0.550, dist=  2.9606
+Large vdw btw " CD  PRO A0011A001" and " CA  GLU A0010A000":    0.606, dist=  2.9725
+Large vdw btw " OG1 THR A0013A001" and " N   THR A0013A000":    0.829, dist=  2.7992
+Large vdw btw " OG1 THR A0013A002" and " N   THR A0013A000":    0.829, dist=  2.7992
+Large vdw btw " CG  LEU A0014A001" and " C   LEU A0014A000":    0.528, dist=  2.9758
+Large vdw btw " CG2 ILE A0015A001" and " C   ILE A0015A000":    0.797, dist=  2.9014
+Large vdw btw " CG  LYS A0016A001" and " C   LYS A0016A000":    0.533, dist=  2.9741
+Large vdw btw " CG  LYS A0016A002" and " C   LYS A0016A000":    0.533, dist=  2.9741
+Large vdw btw " CG1 ILE A0018A001" and " N   ILE A0018A000":    0.612, dist=  2.9429
+Large vdw btw " CG2 ILE A0018A001" and " C   ILE A0018A000":    0.738, dist=  2.9155
+Large vdw btw " OD2 ASP A0019A001" and " CA  ASP A0019A000":    0.608, dist=  2.8324
+Large vdw btw " CB  ASP A0019A001" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " OD2 ASP A0019A002" and " CA  ASP A0019A000":    0.608, dist=  2.8324
+Large vdw btw " CB  ASP A0019A002" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " OD2 ASP A0019A003" and " CA  ASP A0019A000":    0.814, dist=  2.8324
+Large vdw btw " CB  ASP A0019A003" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " OD2 ASP A0019A004" and " CA  ASP A0019A000":    0.814, dist=  2.8324
+Large vdw btw " CB  ASP A0019A004" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " OD2 ASP A0019A005" and " CA  ASP A0019A000":    0.608, dist=  2.8324
+Large vdw btw " CB  ASP A0019A005" and " N   GLY A0020A000":    1.082, dist=  2.8438
+Large vdw btw " CG  ASP A0021A001" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A001" and " CA  ASP A0021A000":    0.683, dist=  2.8140
+Large vdw btw " CG  ASP A0021A002" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A002" and " CA  ASP A0021A000":    0.683, dist=  2.8140
+Large vdw btw " CG  ASP A0021A003" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A003" and " CA  ASP A0021A000":    0.908, dist=  2.8140
+Large vdw btw " CG  ASP A0021A004" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A004" and " CA  ASP A0021A000":    0.908, dist=  2.8140
+Large vdw btw " CG  ASP A0021A005" and " N   ASP A0021A000":    0.591, dist=  2.9286
+Large vdw btw " OD2 ASP A0021A005" and " CA  ASP A0021A000":    0.683, dist=  2.8140
+Large vdw btw " OG1 THR A0022A001" and " N   THR A0022A000":    0.799, dist=  2.8050
+Large vdw btw " OG1 THR A0022A002" and " N   THR A0022A000":    0.799, dist=  2.8050
+Large vdw btw " CG1 VAL A0023A001" and " N   VAL A0023A000":    0.510, dist=  2.9730
+Large vdw btw " CG2 VAL A0023A001" and " N   VAL A0023A000":    0.522, dist=  2.9694
+Large vdw btw " CG2 VAL A0023A001" and " C   VAL A0023A000":    0.654, dist=  2.9375
+Large vdw btw " CG  TYR A0027A001" and " C   TYR A0027A000":    0.531, dist=  2.9534
+Large vdw btw " CG  TYR A0027A002" and " C   TYR A0027A000":    0.531, dist=  2.9534
+Large vdw btw " CG  TYR A0027A003" and " C   TYR A0027A000":    0.531, dist=  2.9534
+Large vdw btw " CB  LYS A0028A001" and " O   LYS A0028A000":    1.018, dist=  2.7482
+Large vdw btw " CB  LYS A0028A002" and " O   LYS A0028A000":    1.018, dist=  2.7482
+Large vdw btw "1HB  GLN A0030A001" and " C   GLN A0030A000":    0.756, dist=  2.4270
+Large vdw btw "2HB  GLN A0030A001" and " N   GLN A0030A000":    0.614, dist=  2.4578
+Large vdw btw " CD  PRO A0031A001" and " CA  GLN A0030A000":    0.953, dist=  2.8907
+Large vdw btw " CD  PRO A0031A002" and " CA  GLN A0030A000":    0.761, dist=  2.9319
+Large vdw btw " CG2 THR A0033A001" and " C   THR A0033A000":    0.586, dist=  2.9571
+Large vdw btw "1HB  PHE A0034A001" and " C   PHE A0034A000":    0.538, dist=  2.4849
+Large vdw btw "1HB  LEU A0037A001" and " C   LEU A0037A000":    0.709, dist=  2.4380
+Large vdw btw " CB  LEU A0038A001" and " O   LEU A0038A000":    0.744, dist=  2.8000
+Large vdw btw " CG1 VAL A0039A001" and " N   VAL A0039A000":    0.583, dist=  2.9511
+Large vdw btw " CG2 VAL A0039A001" and " C   VAL A0039A000":    0.747, dist=  2.9134
+Large vdw btw " OD1 ASP A0040A001" and " CA  ASP A0040A000":    1.057, dist=  2.7879
+Large vdw btw " OD1 ASP A0040A002" and " CA  ASP A0040A000":    1.057, dist=  2.7879
+Large vdw btw " OD1 ASP A0040A003" and " CA  ASP A0040A000":    0.802, dist=  2.7879
+Large vdw btw " OD1 ASP A0040A004" and " CA  ASP A0040A000":    0.802, dist=  2.7879
+Large vdw btw " OD1 ASP A0040A005" and " CA  ASP A0040A000":    0.802, dist=  2.7879
+Large vdw btw " OG1 THR A0041A001" and " N   THR A0041A000":    0.520, dist=  2.8704
+Large vdw btw " OG1 THR A0041A002" and " N   THR A0041A000":    0.520, dist=  2.8704
+Large vdw btw " OG1 THR A0041A003" and " N   THR A0041A000":    0.520, dist=  2.8704
+Large vdw btw " CD  PRO A0042A001" and " CA  THR A0041A000":    0.656, dist=  2.9584
+Large vdw btw " CG  ASN A0051A001" and " N   ASN A0051A000":    0.553, dist=  2.9399
+Large vdw btw " CG  ASN A0051A002" and " N   ASN A0051A000":    0.553, dist=  2.9399
+Large vdw btw " CG  GLU A0052A001" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CG  GLU A0052A002" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CG  GLU A0052A003" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CG  GLU A0052A004" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CG  GLU A0052A005" and " N   GLU A0052A000":    0.558, dist=  2.9585
+Large vdw btw " CD  PRO A0056A001" and " CA  GLY A0055A000":    0.630, dist=  2.9658
+Large vdw btw " CG2 THR A0062A001" and " C   THR A0062A000":    0.810, dist=  2.8986
+Large vdw btw " CG2 THR A0062A002" and " C   THR A0062A000":    0.810, dist=  2.8986
+Large vdw btw "1HB  LYS A0064A001" and " C   LYS A0064A000":    0.853, dist=  2.4063
+Large vdw btw "2HB  LYS A0064A001" and " N   LYS A0064A000":    0.829, dist=  2.4083
+Large vdw btw "1HB  LYS A0064A002" and " C   LYS A0064A000":    0.853, dist=  2.4063
+Large vdw btw "2HB  LYS A0064A002" and " N   LYS A0064A000":    0.829, dist=  2.4083
+Large vdw btw " CG1 VAL A0066A001" and " N   VAL A0066A000":    0.632, dist=  2.9376
+Large vdw btw " ND2 ASN A0068A002" and " CA  ASN A0068A000":    0.729, dist=  2.9134
+Large vdw btw " CG1 ILE A0072A001" and " N   ILE A0072A000":    0.562, dist=  2.9572
+Large vdw btw " CG2 ILE A0072A001" and " C   ILE A0072A000":    0.510, dist=  2.9818
+Large vdw btw " CG1 ILE A0072A002" and " N   ILE A0072A000":    0.562, dist=  2.9572
+Large vdw btw " CG2 ILE A0072A002" and " C   ILE A0072A000":    0.510, dist=  2.9818
+Large vdw btw " CG2 VAL A0074A001" and " N   VAL A0074A000":    0.510, dist=  2.9730
+Large vdw btw " CB  ASP A0077A001" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  ASP A0077A002" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  ASP A0077A003" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  ASP A0077A004" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CB  ASP A0077A005" and " N   LYS A0078A000":    0.905, dist=  2.8757
+Large vdw btw " CG  GLN A0080A001" and " N   GLN A0080A000":    0.698, dist=  2.9208
+Large vdw btw " CG  GLN A0080A002" and " N   GLN A0080A000":    0.698, dist=  2.9208
+Large vdw btw " OG1 THR A0082A001" and " C   THR A0082A000":    1.155, dist=  2.7516
+Large vdw btw " CG2 THR A0082A001" and " N   THR A0082A000":    0.694, dist=  2.9218
+Large vdw btw " OG1 THR A0082A002" and " C   THR A0082A000":    1.155, dist=  2.7516
+Large vdw btw " CG2 THR A0082A002" and " N   THR A0082A000":    0.694, dist=  2.9218
+Large vdw btw " OD1 ASP A0083A001" and " CA  ASP A0083A000":    0.808, dist=  2.8334
+Large vdw btw " CB  ASP A0083A001" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " OD1 ASP A0083A002" and " CA  ASP A0083A000":    0.808, dist=  2.8334
+Large vdw btw " CB  ASP A0083A002" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " OD1 ASP A0083A003" and " CA  ASP A0083A000":    0.604, dist=  2.8334
+Large vdw btw " CB  ASP A0083A003" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " OD1 ASP A0083A004" and " CA  ASP A0083A000":    0.604, dist=  2.8334
+Large vdw btw " CB  ASP A0083A004" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " OD1 ASP A0083A005" and " CA  ASP A0083A000":    0.604, dist=  2.8334
+Large vdw btw " CB  ASP A0083A005" and " N   LYS A0084A000":    0.508, dist=  2.9738
+Large vdw btw " CB  ALA A0090A001" and " N   TYR A0091A000":    0.734, dist=  2.9122
+Large vdw btw " CG  TYR A0091A001" and " N   TYR A0091A000":    0.535, dist=  2.9454
+Large vdw btw " CG  TYR A0091A002" and " N   TYR A0091A000":    0.535, dist=  2.9454
+Large vdw btw " CG  TYR A0091A003" and " N   TYR A0091A000":    0.535, dist=  2.9454
+Large vdw btw " CB  ASP A0095A001" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A001" and " CA  ASP A0095A000":    0.716, dist=  2.8063
+Large vdw btw " CB  ASP A0095A002" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A002" and " CA  ASP A0095A000":    0.716, dist=  2.8063
+Large vdw btw " CB  ASP A0095A003" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A003" and " CA  ASP A0095A000":    0.949, dist=  2.8063
+Large vdw btw " CB  ASP A0095A004" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A004" and " CA  ASP A0095A000":    0.949, dist=  2.8063
+Large vdw btw " CB  ASP A0095A005" and " O   ASP A0095A000":    0.857, dist=  2.7770
+Large vdw btw " OD2 ASP A0095A005" and " CA  ASP A0095A000":    0.716, dist=  2.8063
+Large vdw btw " CG1 VAL A0099A001" and " C   VAL A0099A000":    0.511, dist=  2.9816
+Large vdw btw " CG2 VAL A0099A001" and " N   VAL A0099A000":    0.716, dist=  2.9165
+Large vdw btw " CG  ASN A0100A001" and " N   ASN A0100A000":    0.723, dist=  2.8939
+Large vdw btw " CG  ASN A0100A002" and " N   ASN A0100A000":    0.723, dist=  2.8939
+Large vdw btw " ND2 ASN A0100A002" and " CA  ASN A0100A000":    0.524, dist=  2.9688
+Large vdw btw " CG1 VAL A0104A001" and " C   VAL A0104A000":    0.919, dist=  2.8751
+Large vdw btw "2HB  GLN A0106A001" and " N   GLN A0106A000":    0.590, dist=  2.4643
+Large vdw btw "2HB  GLN A0106A002" and " N   GLN A0106A000":    0.590, dist=  2.4643
+Large vdw btw " CG1 VAL A0111A001" and " C   VAL A0111A000":    0.633, dist=  2.9435
+Large vdw btw " CB  TYR A0113A001" and " O   TYR A0113A000":    0.948, dist=  2.7601
+Large vdw btw " CG  TYR A0113A001" and " N   TYR A0113A000":    0.539, dist=  2.9442
+Large vdw btw " CB  TYR A0113A002" and " O   TYR A0113A000":    0.948, dist=  2.7601
+Large vdw btw " CG  TYR A0113A002" and " N   TYR A0113A000":    0.539, dist=  2.9442
+Large vdw btw " CB  TYR A0113A003" and " O   TYR A0113A000":    0.948, dist=  2.7601
+Large vdw btw " CG  TYR A0113A003" and " N   TYR A0113A000":    0.539, dist=  2.9442
+Large vdw btw " CB  VAL A0114A001" and " O   VAL A0114A000":    0.552, dist=  2.8476
+Large vdw btw " CG2 VAL A0114A001" and " N   VAL A0114A000":    1.021, dist=  2.8542
+Large vdw btw " CB  ASN A0118A001" and " O   ASN A0118A000":    1.371, dist=  2.6972
+Large vdw btw "1HB  ASN A0118A001" and " C   ASN A0118A000":    0.525, dist=  2.4893
+Large vdw btw " OD1 ASN A0118A001" and " CA  ASN A0118A000":    0.724, dist=  2.8046
+Large vdw btw " CB  ASN A0119A001" and " O   ASN A0119A000":    0.900, dist=  2.7688
+Large vdw btw " OD1 ASN A0119A001" and " CA  ASN A0119A000":    0.686, dist=  2.8133
+Large vdw btw " CB  ASN A0119A002" and " O   ASN A0119A000":    0.900, dist=  2.7688
+Large vdw btw " ND2 ASN A0119A002" and " CA  ASN A0119A000":    1.282, dist=  2.8133
+Large vdw btw " CG2 THR A0120A001" and " C   THR A0120A000":    1.142, dist=  2.8345
+Large vdw btw " CG2 THR A0120A002" and " C   THR A0120A000":    1.142, dist=  2.8345
+Large vdw btw " CG2 THR A0120A003" and " C   THR A0120A000":    1.142, dist=  2.8345
+Large vdw btw " CB  HIS A0121A001" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A002" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A003" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A004" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A005" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CB  HIS A0121A006" and " O   HIS A0121A000":    0.753, dist=  2.7981
+Large vdw btw " CG  GLU A0122A001" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CG  GLU A0122A002" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CG  GLU A0122A003" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CG  GLU A0122A004" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CG  GLU A0122A005" and " C   GLU A0122A000":    0.698, dist=  2.9256
+Large vdw btw " CD  GLN A0123A001" and " CA  GLN A0123A000":    0.548, dist=  2.9692
+Large vdw btw " CD  GLN A0123A002" and " CA  GLN A0123A000":    0.548, dist=  2.9692
+Large vdw btw " CG  LYS A0127A001" and " C   LYS A0127A000":    0.699, dist=  2.9253
+Large vdw btw " CG  LYS A0127A002" and " C   LYS A0127A000":    0.699, dist=  2.9253
+Large vdw btw " CB  LYS A0136A001" and " O   LYS A0136A000":    1.277, dist=  2.7095
+Large vdw btw " CG  LYS A0136A001" and " N   LYS A0136A000":    1.247, dist=  2.8182
+Large vdw btw " CB  LYS A0136A002" and " O   LYS A0136A000":    1.277, dist=  2.7095
+Large vdw btw " CG  LYS A0136A002" and " N   LYS A0136A000":    1.247, dist=  2.8182
+Large vdw btw " CG  ASN A0138A001" and " N   ASN A0138A000":    0.586, dist=  2.9299
+Large vdw btw " CB  ASN A0138A001" and " N   ILE A0139A000":    1.598, dist=  2.7729
+Large vdw btw " CG  ASN A0138A002" and " N   ASN A0138A000":    0.586, dist=  2.9299
+Large vdw btw " CB  ASN A0138A002" and " N   ILE A0139A000":    1.598, dist=  2.7729
+Large vdw btw " CG2 ILE A0139A001" and " C   ILE A0139A000":    1.434, dist=  2.7913
+Large vdw btw " CG  TRP A0140A001" and " N   TRP A0140A000":    0.957, dist=  2.8443
+   Done
+
+   Add dummy conformers ... 1 dummy conformers were added.
+   Done
+
+   Making pairwise energy matrices and conformer summary ... 
+energies.opp not found
+   WARNING: No EM entry for _CADM, set to 0.
+   WARNING: No PKA entry for _CADM, set to 0.
+   WARNING: no PROTON for _CADM, 0 assumed
+   WARNING: no ELECTRON for _CADM, 0 assumed
+   WARNING: No RXN entry for _CADM, set to 0.
+   Done
+
+   Skiping writing step 3 rotamer file step3_out.pdb.
+   Total time for step3 (energy calculation) is 234 seconds.
+
+   Output files (epsilon = 4.00):
+      energies.opp    : energy lookup table, use opp to decode the file
+      head3.lst       : conformer summary
+
+Step 3 Done.
+
+Step 4. Monte Carlo Sampling
+   Load conformer list from file "head3.lst" ...
+   Scaling factors:
+   VDW0  = 1.000:
+   VDW1  = 1.000:
+   VDW   = 1.000:
+   TORS  = 1.000:
+   ELE   = 1.000:
+   DSOLV = 1.000:
+   Done
+
+   Load pairwise interactions ...
+   Done
+
+   Verify self consistancy of conformer flag ...
+   LEU01A0007_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01A0011_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0012_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0014_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01A0015_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0017_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01A0018_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01A0023_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0025_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01A0026_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   GLN01A0030_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01A0032_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   THR01A0033_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01A0034_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0036_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0037_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0038_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01A0039_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01A0042_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01A0050_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PRO01A0056_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0058_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   SER01A0059_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0060_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01A0061_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01A0065_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01A0066_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0069_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01A0074_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   PHE01A0076_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0089_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0090_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0094_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   MET01A0098_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01A0099_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0102_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0103_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01A0104_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0108_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0109_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01A0111_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0112_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   VAL01A0114_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ASN01A0118_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0124_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0125_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0128_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0130_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ALA01A0132_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   LEU01A0137_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   ILE01A0139_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   TRP01A0140_001 f 0.00 -> t 1.00 (single conformer treated as fixed)
+   Conformer flags updated due to self consistancy.
+
+   Do titration at 15 points...
+   Detailed progress is in file "mc_out"
+   Monte Carlo set up time: 0 seconds.
+   Titration  1:     2 seconds, biggest stdev of conformer occ = 0.028
+   Titration  2:     1 seconds, biggest stdev of conformer occ = 0.039
+   Titration  3:     2 seconds, biggest stdev of conformer occ = 0.122
+   Titration  4:     1 seconds, biggest stdev of conformer occ = 0.038
+   Titration  5:     2 seconds, biggest stdev of conformer occ = 0.074
+   Titration  6:     1 seconds, biggest stdev of conformer occ = 0.037
+   Titration  7:     1 seconds, biggest stdev of conformer occ = 0.107
+   Titration  8:     1 seconds, biggest stdev of conformer occ = 0.037
+   Titration  9:     2 seconds, biggest stdev of conformer occ = 0.012
+   Titration 10:     1 seconds, biggest stdev of conformer occ = 0.012
+   Titration 11:     1 seconds, biggest stdev of conformer occ = 0.012
+   Titration 12:     2 seconds, biggest stdev of conformer occ = 0.055
+   Titration 13:     1 seconds, biggest stdev of conformer occ = 0.017
+   Titration 14:     1 seconds, biggest stdev of conformer occ = 0.054
+   Titration 15:     2 seconds, biggest stdev of conformer occ = 0.074
+   Done
+
+   Fit titration curves to get pKa/Em ...
+   MFE: didn't specify mfe point, do mfe at pKa or Em 
+   Done
+
+   Total time on MC: 21 seconds
+
+   Output files:
+      mc_out          : MC progress and convergence.
+      fort.38         : Occupancy table.
+      entropy.out     : Entropy correction table
+      pK.out          : pKa or Em from titration curve fitting.
+      sum_crg.out     : Summary of residue charges.
+Step 4 Done.
+
